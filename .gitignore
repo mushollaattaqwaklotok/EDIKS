@@ -1,13 +1,6 @@
-# Python
 __pycache__/
+.env
 *.pyc
-
-# Streamlit
-.streamlit/
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Data backup
-*.bak
+data/*.csv
+assets/*.png
