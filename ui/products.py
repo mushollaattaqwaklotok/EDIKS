@@ -1,59 +1,32 @@
 import streamlit as st
 import pandas as pd
-import os
+from pathlib import Path
 
-DATA_PATH = "data/products.csv"
+DATA_FILE = Path("data/products.csv")
 
-def load_products():
-    if os.path.exists(DATA_PATH):
-        return pd.read_csv(DATA_PATH)
-    return pd.DataFrame(columns=[
-        "nama_produk",
-        "harga",
-        "stok",
-        "status"
-    ])
-
-def save_products(df):
-    os.makedirs("data", exist_ok=True)
-    df.to_csv(DATA_PATH, index=False)
 
 def show_products():
-    st.subheader("📦 Produk UMKM")
+    st.title("🛍 Produk UMKM")
 
-    df = load_products()
-
-    # =========================
-    # FORM TAMBAH PRODUK
-    # =========================
-    with st.expander("➕ Tambah Produk Baru"):
-        with st.form("form_produk"):
-            nama = st.text_input("Nama Produk")
-            harga = st.number_input("Harga", min_value=0, step=1000)
-            stok = st.number_input("Stok", min_value=0, step=1)
-            status = st.selectbox("Status", ["Aktif", "Habis"])
-
-            simpan = st.form_submit_button("💾 Simpan Produk")
-
-        if simpan:
-            if nama.strip() == "":
-                st.warning("Nama produk tidak boleh kosong")
-            else:
-                new_data = {
-                    "nama_produk": nama,
-                    "harga": harga,
-                    "stok": stok,
-                    "status": status
-                }
-                df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
-                save_products(df)
-                st.success("Produk berhasil ditambahkan")
-                st.rerun()
-
-    # =========================
-    # TAMPILKAN DATA
-    # =========================
-    if df.empty:
+    if not DATA_FILE.exists():
         st.info("Belum ada produk")
-    else:
-        st.dataframe(df, use_container_width=True)
+        return
+
+    df = pd.read_csv(DATA_FILE)
+
+    for i, row in df.iterrows():
+        with st.container(border=True):
+            col1, col2 = st.columns([1, 3])
+
+            with col1:
+                st.image(row["foto"], use_column_width=True)
+
+            with col2:
+                st.subheader(row["nama"])
+                st.write(f"👩‍🍳 {row['penjual']}")
+                st.write(f"💰 Rp {int(row['harga']):,}")
+
+                if st.button("🗑 Hapus", key=f"hapus_{i}"):
+                    df.drop(i, inplace=True)
+                    df.to_csv(DATA_FILE, index=False)
+                    st.experimental_rerun()
