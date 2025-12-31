@@ -4,8 +4,7 @@ from pathlib import Path
 import importlib.util
 
 # =====================================================
-#  LOAD utils/image_process.py SECARA LANGSUNG
-#  (ANTI ModuleNotFoundError STREAMLIT CLOUD)
+#  LOAD image_process.py DENGAN FILE-BASED IMPORT
 # =====================================================
 BASE_DIR = Path(__file__).resolve().parents[1]
 IMAGE_PROCESS_PATH = BASE_DIR / "utils" / "image_process.py"
@@ -33,30 +32,21 @@ DATA_FILE.parent.mkdir(exist_ok=True)
 # =====================================================
 def show_seller():
     st.subheader("👩‍🍳 Input Produk Penjual")
-    st.caption("Cukup upload foto dan isi harga, sistem akan menampilkan otomatis")
+    st.caption("Cukup upload foto dan isi harga")
 
     nama = st.text_input("Nama Produk")
     penjual = st.text_input("Nama Penjual")
-    harga = st.number_input(
-        "Harga Dasar (Rp)",
-        min_value=0,
-        step=500
-    )
-    foto = st.file_uploader(
-        "Upload Foto Produk",
-        type=["jpg", "jpeg", "png"]
-    )
+    harga = st.number_input("Harga (Rp)", min_value=0, step=500)
+    foto = st.file_uploader("Upload Foto Produk", type=["jpg", "jpeg", "png"])
 
     if st.button("💾 Simpan Produk"):
         if not nama or not penjual or not foto:
-            st.warning("⚠️ Nama produk, penjual, dan foto wajib diisi.")
+            st.warning("⚠️ Semua field wajib diisi")
             return
 
-        # nama file aman
         nama_file = nama.lower().replace(" ", "_")
         output_path = ASSET_DIR / f"{nama_file}.png"
 
-        # proses gambar (gabung foto + harga)
         process_image(foto, nama, harga, output_path)
 
         data_baru = {
@@ -68,14 +58,11 @@ def show_seller():
 
         if DATA_FILE.exists():
             df = pd.read_csv(DATA_FILE)
-            df = pd.concat(
-                [df, pd.DataFrame([data_baru])],
-                ignore_index=True
-            )
+            df = pd.concat([df, pd.DataFrame([data_baru])], ignore_index=True)
         else:
             df = pd.DataFrame([data_baru])
 
         df.to_csv(DATA_FILE, index=False)
 
-        st.success("✅ Produk berhasil disimpan dan siap tampil di etalase!")
-        st.image(output_path, caption=nama, width=300)
+        st.success("✅ Produk berhasil disimpan")
+        st.image(output_path, width=300)
