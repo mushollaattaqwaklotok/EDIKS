@@ -1,28 +1,59 @@
 import streamlit as st
 import pandas as pd
-from pathlib import Path
+import os
 
-DATA_FILE = Path("data/produk.csv")
+DATA_PATH = "data/products.csv"
 
-def show_produk():
-    st.subheader("🛍 Daftar Produk Warga")
+def load_products():
+    if os.path.exists(DATA_PATH):
+        return pd.read_csv(DATA_PATH)
+    return pd.DataFrame(columns=[
+        "nama_produk",
+        "harga",
+        "stok",
+        "status"
+    ])
 
-    if not DATA_FILE.exists():
-        st.warning("Belum ada data produk.")
-        return
+def save_products(df):
+    os.makedirs("data", exist_ok=True)
+    df.to_csv(DATA_PATH, index=False)
 
-    df = pd.read_csv(DATA_FILE)
+def show_products():
+    st.subheader("📦 Produk UMKM")
 
+    df = load_products()
+
+    # =========================
+    # FORM TAMBAH PRODUK
+    # =========================
+    with st.expander("➕ Tambah Produk Baru"):
+        with st.form("form_produk"):
+            nama = st.text_input("Nama Produk")
+            harga = st.number_input("Harga", min_value=0, step=1000)
+            stok = st.number_input("Stok", min_value=0, step=1)
+            status = st.selectbox("Status", ["Aktif", "Habis"])
+
+            simpan = st.form_submit_button("💾 Simpan Produk")
+
+        if simpan:
+            if nama.strip() == "":
+                st.warning("Nama produk tidak boleh kosong")
+            else:
+                new_data = {
+                    "nama_produk": nama,
+                    "harga": harga,
+                    "stok": stok,
+                    "status": status
+                }
+                df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
+                save_products(df)
+                st.success("Produk berhasil ditambahkan")
+                st.rerun()
+
+    # =========================
+    # TAMPILKAN DATA
+    # =========================
     if df.empty:
-        st.info("Produk masih kosong.")
-        return
-
-    cols = st.columns(3)
-
-    for i, row in df.iterrows():
-        with cols[i % 3]:
-            if row["foto"]:
-                st.image(row["foto"], use_column_width=True)
-            st.markdown(f"**{row['nama_produk']}**")
-            st.markdown(f"💰 Rp {row['harga']:,}")
-            st.caption(f"Penjual: {row['penjual']}")
+        st.info("Belum ada produk")
+    else:
+        st.dataframe(df, use_container_width=True)
