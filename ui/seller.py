@@ -1,20 +1,22 @@
-import sys
-from pathlib import Path
-
-# =====================================================
-#  FIX PATH AGAR UTILS TERBACA DI STREAMLIT CLOUD
-# =====================================================
-BASE_DIR = Path(__file__).resolve().parents[1]
-sys.path.append(str(BASE_DIR))
-
-# =====================================================
-#  IMPORT
-# =====================================================
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-from utils.image_process import process_image
+import importlib.util
 
+# =====================================================
+#  LOAD image_process.py SECARA LANGSUNG (ANTI ERROR)
+# =====================================================
+BASE_DIR = Path(__file__).resolve().parents[1]
+IMAGE_PROCESS_PATH = BASE_DIR / "utils" / "image_process.py"
+
+spec = importlib.util.spec_from_file_location(
+    "image_process",
+    IMAGE_PROCESS_PATH
+)
+image_process = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(image_process)
+
+process_image = image_process.process_image
 DATA_FILE = Path("data/produk.csv")
 ASSET_DIR = Path("assets")
 
