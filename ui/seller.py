@@ -1,59 +1,45 @@
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-import importlib.util
+from datetime import datetime
 
-# =====================================================
-#  LOAD image_process.py DENGAN FILE-BASED IMPORT
-# =====================================================
-BASE_DIR = Path(__file__).resolve().parents[1]
-IMAGE_PROCESS_PATH = BASE_DIR / "utils" / "image_process.py"
+DATA_DIR = Path("data")
+IMG_DIR = Path("assets/products")
+DATA_DIR.mkdir(exist_ok=True)
+IMG_DIR.mkdir(parents=True, exist_ok=True)
 
-spec = importlib.util.spec_from_file_location(
-    "image_process",
-    IMAGE_PROCESS_PATH
-)
-image_process = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(image_process)
+DATA_FILE = DATA_DIR / "products.csv"
 
-process_image = image_process.process_image
 
-# =====================================================
-#  PATH DATA
-# =====================================================
-DATA_FILE = BASE_DIR / "data" / "produk.csv"
-ASSET_DIR = BASE_DIR / "assets"
-
-ASSET_DIR.mkdir(exist_ok=True)
-DATA_FILE.parent.mkdir(exist_ok=True)
-
-# =====================================================
-#  UI INPUT PENJUAL
-# =====================================================
 def show_seller():
-    st.subheader("👩‍🍳 Input Produk Penjual")
-    st.caption("Cukup upload foto dan isi harga")
+    st.title("👩‍🍳 Upload Produk UMKM")
+    st.write("Unggah produk UMKM warga Klotok – Simogirang")
 
-    nama = st.text_input("Nama Produk")
-    penjual = st.text_input("Nama Penjual")
-    harga = st.number_input("Harga (Rp)", min_value=0, step=500)
-    foto = st.file_uploader("Upload Foto Produk", type=["jpg", "jpeg", "png"])
+    with st.form("form_produk"):
+        nama = st.text_input("Nama Produk")
+        harga = st.number_input("Harga (Rp)", min_value=0, step=500)
+        penjual = st.text_input("Nama Penjual")
+        foto = st.file_uploader("Foto Produk", type=["png", "jpg", "jpeg"])
 
-    if st.button("💾 Simpan Produk"):
-        if not nama or not penjual or not foto:
-            st.warning("⚠️ Semua field wajib diisi")
+        submit = st.form_submit_button("💾 Simpan Produk")
+
+    if submit:
+        if not nama or not penjual or foto is None:
+            st.warning("⚠️ Lengkapi semua data")
             return
 
-        nama_file = nama.lower().replace(" ", "_")
-        output_path = ASSET_DIR / f"{nama_file}.png"
+        # simpan foto
+        filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{foto.name}"
+        img_path = IMG_DIR / filename
+        with open(img_path, "wb") as f:
+            f.write(foto.getbuffer())
 
-        process_image(foto, nama, harga, output_path)
-
+        # simpan data
         data_baru = {
-            "nama_produk": nama,
+            "nama": nama,
             "harga": harga,
-            "foto": str(output_path),
-            "penjual": penjual
+            "penjual": penjual,
+            "foto": str(img_path)
         }
 
         if DATA_FILE.exists():
@@ -63,6 +49,4 @@ def show_seller():
             df = pd.DataFrame([data_baru])
 
         df.to_csv(DATA_FILE, index=False)
-
         st.success("✅ Produk berhasil disimpan")
-        st.image(output_path, width=300)
