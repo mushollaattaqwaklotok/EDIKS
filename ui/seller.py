@@ -1,3 +1,15 @@
+import sys
+from pathlib import Path
+
+# =====================================================
+#  FIX PATH AGAR UTILS TERBACA DI STREAMLIT CLOUD
+# =====================================================
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
+
+# =====================================================
+#  IMPORT
+# =====================================================
 import streamlit as st
 import pandas as pd
 from pathlib import Path
